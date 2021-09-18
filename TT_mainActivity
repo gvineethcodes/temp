@@ -1,0 +1,140 @@
+package com.example.talkingtopics;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Handler;
+import android.widget.CheckBox;
+import android.widget.ImageButton;
+import android.widget.Spinner;
+import android.widget.TextView;
+import static com.example.talkingtopics.PlayService.text;
+
+import java.util.Calendar;
+
+
+public class MainActivity extends AppCompatActivity {
+    public static TextView textView;
+    public static Spinner spinner,spinner2;
+    public static ImageButton  imageButton,imageButton2,imageButton3;
+    SharedPreferences sharedpreferences;
+    SharedPreferences.Editor editor;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        CheckBox checkbox = findViewById(R.id.checkbox);
+        spinner = findViewById(R.id.spinner);
+        spinner2 = findViewById(R.id.spinner2);
+        imageButton = findViewById(R.id.imageButton);
+        imageButton2 = findViewById(R.id.imageButton2);
+        imageButton3 = findViewById(R.id.imageButton3);
+        textView = findViewById(R.id.textview);
+
+        sharedpreferences = getSharedPreferences("MyM10", Context.MODE_PRIVATE);
+        editor = sharedpreferences.edit();
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(new Intent(getApplicationContext(),PlayService.class));
+        }else{
+            startService(new Intent(getApplicationContext(),PlayService.class));
+        }
+
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                textView.setText(text);
+                handler.postDelayed(this,1000);
+            }
+        },0);
+
+        if(sharedpreferences.getBoolean("one",true)){
+
+            Intent notifyIntent = new Intent(this, Action.class).setAction("alarm");
+
+            final PendingIntent notifyPendingIntent = PendingIntent.getBroadcast(this, 1111, notifyIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+            final AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+
+            long repeatInterval = AlarmManager.INTERVAL_HOUR;
+
+            Calendar calendar = Calendar.getInstance();
+            calendar.set(Calendar.HOUR_OF_DAY,(calendar.get(Calendar.HOUR_OF_DAY)+1));
+            calendar.set(Calendar.MINUTE,0);
+            calendar.set(Calendar.SECOND,0);
+
+            alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), repeatInterval, notifyPendingIntent);
+            editor.putBoolean("one", false);
+            editor.commit();
+        }
+
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        imageButton2.setImageResource(sharedpreferences.getInt("image2",R.drawable.ic_baseline_play_arrow_24));
+        showButton(sharedpreferences.getInt("showButton",0));
+        spinner2.setSelection(sharedpreferences.getInt("TopicPosition",0));
+        keepBoolSharedPreferences("activity",true);
+
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        keepBoolSharedPreferences("activity",false);
+
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+    }
+
+    private void showButton(int show){
+        if(show==1){
+            enableButtons();
+        }else {
+            disableButtons();
+        }
+    }
+
+    public void enableButtons(){
+        imageButton.setEnabled(true);
+        imageButton2.setEnabled(true);
+        imageButton3.setEnabled(true);
+
+    }
+
+    public void disableButtons(){
+        imageButton.setEnabled(false);
+        imageButton2.setEnabled(false);
+        imageButton3.setEnabled(false);
+    }
+
+    private void keepBoolSharedPreferences(String keyStr, boolean valueBool) {
+        editor.putBoolean(keyStr, valueBool);
+        editor.apply();
+    }
+
+    private void keepInSharedPreferences(String keyStr, int valueInt) {
+        editor.putInt(keyStr, valueInt);
+        editor.apply();
+    }
+
+    private void keepStringSharedPreferences(String keyStr1, String valueStr1) {
+        editor.putString(keyStr1, valueStr1);
+        editor.apply();
+    }
+}
