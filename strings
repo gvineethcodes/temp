@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">TT</string>
+    <string name="nextButton">next</string>
+    <string name="playButton">play</string>
+    <string name="prev">prev</string>
+</resources>
+
+
+
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
